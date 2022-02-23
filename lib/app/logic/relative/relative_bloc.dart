@@ -29,6 +29,7 @@ class RelativeBloc extends Bloc<RelativeEvent, RelativeState> {
         ApiResponse<bool> _response = await relativeRepository.createRelative(event.data);
 
         if (_response.status == Status.ERROR) {
+          ScaffoldMessenger.of(navigationKey.currentContext!).showSnackBar(SnackBar(content: Text(_response.message)));
           return;
         }
 
