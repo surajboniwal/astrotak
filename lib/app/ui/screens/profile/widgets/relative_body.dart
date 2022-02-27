@@ -1,6 +1,7 @@
 import 'package:astrotak/app/data/models/relative.dart';
 import 'package:astrotak/app/data/repositories/relative_repository.dart';
 import 'package:astrotak/app/logic/relative/relative_bloc.dart';
+import 'package:astrotak/app/ui/screens/profile/widgets/form.dart';
 import 'package:astrotak/app/ui/theme/app_colors.dart';
 import 'package:astrotak/app/ui/widgets/scroll_glow_remove.dart';
 import 'package:flutter/material.dart';
@@ -112,7 +113,14 @@ class RelativeBody extends StatelessWidget {
                         ),
                         Expanded(
                           child: IconButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              RelativeFormState.parseRelative(relative);
+                              pageController.animateToPage(
+                                1,
+                                duration: Duration(milliseconds: 100),
+                                curve: Curves.easeOut,
+                              );
+                            },
                             icon: Icon(
                               Icons.edit,
                               color: AppColors.primaryColor,

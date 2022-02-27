@@ -8,6 +8,7 @@ abstract class BaseRelativeRepository {
   Future<ApiResponse<bool>> createRelative(Map<String, dynamic> data);
 
   Future<ApiResponse<bool>> deleteRelative(String id);
+  Future<ApiResponse<bool>> updateRelative(String id, Map<String, dynamic> data);
 }
 
 class RelativeRepository with NetworkClient implements BaseRelativeRepository {
@@ -20,8 +21,7 @@ class RelativeRepository with NetworkClient implements BaseRelativeRepository {
         return ApiResponse.completed(List<Relative>.from([]));
       }
 
-      return ApiResponse.completed(
-          (response.data['data']['allRelatives'] as List).map((e) => Relative.fromMap(e)).toList());
+      return ApiResponse.completed((response.data['data']['allRelatives'] as List).map((e) => Relative.fromMap(e)).toList());
     } on DioError catch (_) {
       return ApiResponse.error('Please try again after sometime');
     } catch (err) {
@@ -47,6 +47,19 @@ class RelativeRepository with NetworkClient implements BaseRelativeRepository {
   Future<ApiResponse<bool>> deleteRelative(String id) async {
     try {
       await client.post('/relative/delete/$id');
+
+      return ApiResponse.completed(true);
+    } on DioError catch (_) {
+      return ApiResponse.error('Please try again after sometime');
+    } catch (_) {
+      return ApiResponse.error('Something went wrong');
+    }
+  }
+
+  @override
+  Future<ApiResponse<bool>> updateRelative(String id, Map<String, dynamic> data) async {
+    try {
+      await client.post('/relative/update/$id', data: data);
 
       return ApiResponse.completed(true);
     } on DioError catch (_) {

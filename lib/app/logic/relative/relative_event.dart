@@ -17,3 +17,13 @@ class CreateRelative extends RelativeEvent {
   @override
   List<Object?> get props => [data];
 }
+
+class UpdateRelative extends RelativeEvent {
+  final Map<String, dynamic> data;
+  final String id;
+
+  UpdateRelative(this.data, this.id);
+
+  @override
+  List<Object?> get props => [data, id];
+}

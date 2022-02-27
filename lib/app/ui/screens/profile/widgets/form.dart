@@ -1,10 +1,16 @@
+import 'dart:developer';
+
 import 'package:astrotak/app/data/models/location.dart';
+import 'package:astrotak/app/data/models/relative.dart';
 import 'package:astrotak/app/data/repositories/location_repository.dart';
+import 'package:astrotak/app/data/repositories/relative_repository.dart';
+import 'package:astrotak/app/data/response.dart';
 import 'package:astrotak/app/logic/location_search/location_search_cubit.dart';
 import 'package:astrotak/app/logic/relative/relative_bloc.dart';
 import 'package:astrotak/app/ui/screens/profile/profile.dart';
 import 'package:astrotak/app/ui/theme/app_colors.dart';
 import 'package:astrotak/app/ui/widgets/scroll_glow_remove.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
@@ -17,27 +23,61 @@ class RelativeForm extends StatefulWidget {
   final PageController pageController;
 
   @override
-  State<RelativeForm> createState() => _RelativeFormState();
+  State<RelativeForm> createState() => RelativeFormState();
 }
 
-class _RelativeFormState extends State<RelativeForm> {
+class RelativeFormState extends State<RelativeForm> {
   TimeType timeType = TimeType.AM;
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   String? placeError;
 
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController dayController = TextEditingController();
-  final TextEditingController monthController = TextEditingController();
-  final TextEditingController yearController = TextEditingController();
-  final TextEditingController hourController = TextEditingController();
-  final TextEditingController minController = TextEditingController();
-  final TextEditingController placeController = TextEditingController();
+  static final TextEditingController nameController = TextEditingController();
+  static final TextEditingController dayController = TextEditingController();
+  static final TextEditingController monthController = TextEditingController();
+  static final TextEditingController yearController = TextEditingController();
+  static final TextEditingController hourController = TextEditingController();
+  static final TextEditingController minController = TextEditingController();
+  static final TextEditingController placeController = TextEditingController();
 
-  String gender = 'Male';
+  static String gender = 'MALE';
   String relation = 'Brother';
 
-  Location? location;
+  static Location? location;
+
+  static bool isUpdate = false;
+  static String id = '';
+
+  static void parseRelative(Relative relative) {
+    nameController.text = '${relative.firstName} ${relative.lastName}';
+    dayController.text = relative.dateAndTimeOfBirth.day.toString();
+    monthController.text = relative.dateAndTimeOfBirth.month.toString();
+    yearController.text = relative.dateAndTimeOfBirth.year.toString();
+    hourController.text = relative.dateAndTimeOfBirth.hour.toString();
+    minController.text = relative.dateAndTimeOfBirth.minute.toString();
+    placeController.text = relative.birthPlace.placeName.toString();
+    gender = relative.gender;
+    location = Location(
+      placeName: relative.birthPlace.placeName,
+      placeId: relative.birthPlace.placeId,
+    );
+    isUpdate = true;
+    id = relative.uuid;
+  }
+
+  static void clearState() {
+    nameController.text = '';
+    dayController.text = '';
+    monthController.text = '';
+    yearController.text = '';
+    hourController.text = '';
+    minController.text = '';
+    placeController.text = '';
+    gender = 'MALE';
+    location = null;
+    isUpdate = false;
+    id = '';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -273,8 +313,8 @@ class _RelativeFormState extends State<RelativeForm> {
                                   isDense: true,
                                 ),
                                 hint: Text('Gender'),
-                                value: 'Male',
-                                items: ['Male', 'Female']
+                                value: 'MALE',
+                                items: ['MALE', 'FEMALE']
                                     .map(
                                       (e) => DropdownMenuItem<String>(
                                         child: Text(e),
@@ -324,7 +364,7 @@ class _RelativeFormState extends State<RelativeForm> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           placeError = null;
                           bool parse = true;
                           if (location == null) {
@@ -352,14 +392,35 @@ class _RelativeFormState extends State<RelativeForm> {
                               "relationId": 3,
                               "gender": gender.toUpperCase(),
                             };
-
-                            context.read<RelativeBloc>().add(CreateRelative(data));
+                            if (isUpdate) {
+                              ApiResponse<bool> res = await RelativeRepository().updateRelative(id, data);
+                              if (res.status == Status.ERROR) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res.message)));
+                                return;
+                              }
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Relative updated')));
+                              context.read<RelativeBloc>().add(LoadRelative());
+                              widget.pageController.animateToPage(0, duration: Duration(milliseconds: 100), curve: Curves.easeOut);
+                              clearState();
+                            } else {
+                              context.read<RelativeBloc>().add(CreateRelative(data));
+                              await Future.delayed(Duration(milliseconds: 1000));
+                              widget.pageController.animateToPage(0, duration: Duration(milliseconds: 100), curve: Curves.easeOut);
+                            }
                           }
                         },
                         style: ElevatedButton.styleFrom(
                           primary: AppColors.primaryColor,
                         ),
-                        child: Text('Save relative'),
+                        child: BlocBuilder<RelativeBloc, RelativeState>(
+                          builder: (context, state) {
+                            log(state.toString());
+                            if (state is RelativeLoading) {
+                              return Center(child: CupertinoActivityIndicator());
+                            }
+                            return Text('Save relative');
+                          },
+                        ),
                       ),
                     ],
                   ),

@@ -131,6 +131,7 @@ class ProfileScreen extends StatelessWidget {
                                                           duration: Duration(milliseconds: 100),
                                                           curve: Curves.easeOut,
                                                         );
+                                                        RelativeFormState.clearState();
                                                       },
                                                       icon: Icon(Icons.chevron_left),
                                                     ),

@@ -15,6 +15,7 @@ class RelativeBloc extends Bloc<RelativeEvent, RelativeState> {
   RelativeBloc(this.relativeRepository) : super(RelativeLoading()) {
     on<RelativeEvent>((event, emit) async {
       if (event is LoadRelative) {
+        emit(RelativeLoading());
         ApiResponse<List<Relative>> _relatives = await relativeRepository.fetchRelatives();
 
         if (_relatives.status == Status.ERROR) {
